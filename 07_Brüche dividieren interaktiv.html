@@ -1,0 +1,380 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Brüche dividieren</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Caveat:wght@600;700&display=swap">
+<style>
+/* Layout: ein Heftblatt (Karopapier) mit einer Aufgabenkarte, darunter Merkkasten und Bruchstreifen-Erklärung */
+:root{
+  --paper:#f8fafd; --grid:#dfe7f3; --card:#ffffff; --ink:#1d3b86; --text:#1c2333; --muted:#5a6680;
+  --red:#cf3527; --ok:#1d8249; --okbg:#e5f5ec; --errbg:#fdeceb; --marker:#fff1a8; --line:#c9d4e6;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-hand:"Caveat", "Comic Sans MS", cursive;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111726; --grid:#1b2438; --card:#172035; --ink:#9fb9ff; --text:#e6ebf5; --muted:#98a4bd;
+  --red:#ff7f70; --ok:#62d392; --okbg:#153325; --errbg:#3a1c1c; --marker:#5a4c12; --line:#2d3a55; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111726; --grid:#1b2438; --card:#172035; --ink:#9fb9ff; --text:#e6ebf5; --muted:#98a4bd;
+  --red:#ff7f70; --ok:#62d392; --okbg:#153325; --errbg:#3a1c1c; --marker:#5a4c12; --line:#2d3a55; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:20px 20px;color:var(--text);font-family:var(--f-body);font-size:17px;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;gap:22px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);line-height:1.05;margin:0;color:var(--ink);text-wrap:balance}
+.sub{margin:6px 0 0;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-weight:700;font-size:.9rem;border:0;background:var(--card);color:var(--ink);padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.stats{font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{color:var(--text)}
+
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:20px clamp(14px,3vw,28px);box-shadow:0 2px 0 var(--line)}
+.steps{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.steps li{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:999px;border:2px solid var(--line);color:var(--muted);font-weight:700;font-size:.92rem}
+.steps li span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--line);color:var(--text);font-size:.8rem}
+.steps li.active{border-color:var(--ink);color:var(--ink)}
+.steps li.active span{background:var(--ink);color:var(--card)}
+.steps li.done{border-color:var(--ok);color:var(--ok)}
+.steps li.done span{background:var(--ok);color:var(--card)}
+.prompt{font-size:1.08rem;margin:0 0 6px;min-height:1.5em}
+.prompt strong{background:linear-gradient(transparent 55%,var(--marker) 55%)}
+
+.history{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;color:var(--muted);font-size:1.25rem;margin:10px 0 0}
+.stage{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 16px;min-height:190px;padding:18px 0;font-size:2.6rem}
+.frac{display:inline-flex;flex-direction:column;align-items:center;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+.frac .bar{align-self:stretch;height:3px;background:currentColor;border-radius:2px;margin:4px 0}
+.frac>span:not(.bar){padding:0 .15em}
+.history .frac .bar{height:2px;margin:2px 0}
+.op{font-weight:700;color:var(--text);min-width:.8em;text-align:center}
+.eqs{color:var(--muted)}
+
+.frac-btn{font:inherit;color:var(--ink);background:transparent;border:2px dashed var(--line);border-radius:12px;padding:8px 16px;cursor:pointer;transition:border-color .15s,background .15s}
+.frac-btn:hover{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.op-btn{font:inherit;font-weight:700;color:var(--red);background:transparent;border:2px dashed var(--red);border-radius:50%;width:1.4em;height:1.4em;line-height:1;cursor:pointer;animation:pulse 1.2s ease-in-out infinite}
+.hl{color:var(--ink);background:var(--marker);border-radius:10px;padding:6px 14px}
+.frac-static{color:var(--ink);padding:8px 16px}
+
+.big{display:inline-flex;flex-direction:column;align-items:center}
+.big .row{display:flex;gap:10px;align-items:flex-end}
+.big .row.bot{align-items:flex-start}
+.big .bar{align-self:stretch;height:4px;background:var(--text);border-radius:2px;margin:6px 0}
+.big .dot{font-weight:700;align-self:center}
+.chip{font:inherit;font-weight:700;color:var(--ink);background:transparent;border:2px solid transparent;border-radius:12px;padding:2px 12px;cursor:pointer;display:inline-flex;align-items:center;line-height:1.05;font-variant-numeric:tabular-nums}
+.row.top .chip{flex-direction:column-reverse}
+.row.bot .chip{flex-direction:column}
+.chip:hover{border-color:var(--line)}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--marker)}
+.chip:disabled{cursor:default}
+.chip:disabled:hover{border-color:transparent}
+.chip .v{position:relative;padding:0 .12em}
+.chip .v.new{font-family:var(--f-hand);color:var(--red);font-size:.78em;line-height:1}
+.chip .v.old{background:linear-gradient(to top right,transparent calc(50% - 2px),var(--red) calc(50% - 2px),var(--red) calc(50% + 2px),transparent calc(50% + 2px));opacity:.6}
+
+.panel{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-top:4px}
+.panel label{font-weight:700}
+input[type=number]{font:inherit;font-weight:700;width:4.2em;padding:6px 8px;border:2px solid var(--line);border-radius:10px;background:var(--paper);color:var(--text);text-align:center;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.ans{display:inline-flex;flex-direction:column;align-items:center;gap:6px}
+.ans input{font-size:2.2rem;width:2.8em}
+.ans .bar{align-self:stretch;height:4px;background:var(--text);border-radius:2px}
+
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 18px;cursor:pointer;border:2px solid var(--ink);background:var(--ink);color:var(--card)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.feedback{margin-top:14px;padding:10px 14px;border-radius:10px;min-height:1.5em;font-weight:700}
+.feedback:empty{display:none}
+.feedback.ok{background:var(--okbg);color:var(--ok)}
+.feedback.err{background:var(--errbg);color:var(--red)}
+.feedback.info{background:color-mix(in srgb,var(--marker) 60%,transparent);color:var(--text)}
+.mixed{display:inline-flex;align-items:center;gap:4px;color:var(--ok);font-weight:700}
+.result .frac{color:var(--ok)}
+.done-note{text-align:center;color:var(--muted);margin:0}
+
+.lower{display:grid;grid-template-columns:1fr;gap:22px}
+@media (max-width:720px){.lower{grid-template-columns:1fr}}
+.lower>*{min-width:0}
+h2{font-family:var(--f-display);font-weight:800;font-size:1.3rem;margin:0 0 10px;color:var(--ink)}
+.merke{border-color:var(--red)}
+.merke h2{color:var(--red)}
+.merke p{margin:0 0 12px;font-weight:700}
+.merke ol{margin:0;padding-left:1.3em;display:grid;gap:8px}
+
+.shake{animation:shake .4s}
+.flip{animation:flip .44s ease-in-out}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+@keyframes pulse{50%{transform:scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.shake,.flip,.op-btn{animation:none}}
+@media (max-width:480px){.stage{font-size:2rem}.history{font-size:1.05rem}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Brüche dividieren</h1>
+      <p class="sub">Kehrbruch bilden, kürzen, berechnen: Schritt für Schritt zum Ergebnis.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Schwierigkeit">
+        <button type="button" id="lvl-easy" aria-pressed="true">Einstieg</button>
+        <button type="button" id="lvl-hard" aria-pressed="false">Profi</button>
+      </div>
+      <div class="stats" id="stats">Gelöst: <b>0</b> · fehlerfrei: <b>0</b></div>
+    </div>
+  </header>
+
+  <section class="card" aria-live="polite">
+    <ol class="steps" id="steps">
+      <li data-s="1"><span>1</span>Kehrbruch</li>
+      <li data-s="2"><span>2</span>Kürzen</li>
+      <li data-s="3"><span>3</span>Berechnen</li>
+    </ol>
+    <p class="prompt" id="prompt"></p>
+    <div class="history" id="history"></div>
+    <div class="stage" id="stage"></div>
+    <div id="extra"></div>
+    <div class="feedback" id="feedback"></div>
+  </section>
+
+  <div class="lower">
+    <section class="card merke">
+      <h2>Merke</h2>
+      <p>Man dividiert durch einen Bruch, indem man mit seinem Kehrbruch multipliziert.</p>
+      <ol>
+        <li><b>Kehrbruch:</b> Den zweiten Bruch umdrehen (Zähler und Nenner tauschen). Aus <b>:</b> wird <b>·</b></li>
+        <li><b>Kürzen:</b> Vor dem Multiplizieren über Kreuz kürzen. Immer eine Zahl oben mit einer Zahl unten.</li>
+        <li><b>Berechnen:</b> Zähler mal Zähler, Nenner mal Nenner.</li>
+      </ol>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const gcd = (x,y) => { while(y){ [x,y] = [y, x % y]; } return x; };
+const rnd = (lo,hi) => lo + Math.floor(Math.random()*(hi-lo+1));
+const frac = (n,d,cls='') => `<span class="frac ${cls}"><span>${n}</span><span class="bar"></span><span>${d}</span></span>`;
+const cur = arr => arr[arr.length-1];
+
+let level = 'easy', solved = 0, perfect = 0, first = true, S = null;
+
+function generate(){
+  if(first){ first = false; return {a:3,b:4,c:9,d:10}; }
+  const hard = level === 'hard', max = hard ? 16 : 10;
+  for(let i=0;i<20000;i++){
+    const b = rnd(2,max), d = rnd(2,max);
+    const a = rnd(1, hard ? max : b-1), c = rnd(1, hard ? max : d-1);
+    if(a===b || c===d || gcd(a,b)!==1 || gcd(c,d)!==1) continue;
+    if(a===c && b===d) continue;
+    const g1 = gcd(a,c), g2 = gcd(d,b);
+    if(hard ? (g1<2 || g2<2) : (g1<2 && g2<2)) continue;
+    if(hard && a<b && c<d && Math.random()<.5) continue; // öfter unechte Brüche
+    return {a,b,c,d};
+  }
+  return {a:4,b:9,c:2,d:3};
+}
+
+function newTask(){
+  const t = generate();
+  S = {...t, step:'flip', top:[[t.a],[t.d]], bot:[[t.b],[t.c]], selT:null, selB:null, err:0};
+  fb('', '');
+  render();
+}
+
+function fb(msg, kind){ const f = $('feedback'); f.className = 'feedback ' + kind; f.innerHTML = msg; }
+function shake(el){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+function mistake(msg, el){ S.err++; fb(msg, 'err'); if(el) shake(el); }
+
+function stepIndex(){ return {flip:1, sign:1, cancel:2, calc:3, done:4}[S.step]; }
+
+function chip(arr, side, i, disabled){
+  const pressed = (side==='t' ? S.selT===i : S.selB===i);
+  const vals = arr.map((v,k) => {
+    const cls = (k===0 ? 'orig' : 'new') + (k < arr.length-1 ? ' old' : '');
+    return `<span class="v ${cls}">${v}</span>`;
+  }).join('');
+  return `<button type="button" class="chip" data-act="sel" data-side="${side}" data-i="${i}" aria-pressed="${pressed}" ${disabled?'disabled':''} aria-label="${side==='t'?'Zähler':'Nenner'} ${cur(arr)}">${vals}</button>`;
+}
+function bigFrac(disabled){
+  return `<span class="big">
+    <span class="row top">${chip(S.top[0],'t',0,disabled)}<span class="dot">·</span>${chip(S.top[1],'t',1,disabled)}</span>
+    <span class="bar"></span>
+    <span class="row bot">${chip(S.bot[0],'b',0,disabled)}<span class="dot">·</span>${chip(S.bot[1],'b',1,disabled)}</span>
+  </span>`;
+}
+const histStart = () => `${frac(S.a,S.b)}<span>:</span>${frac(S.c,S.d)}<span>=</span>${frac(S.a,S.b)}<span>·</span>${frac(S.d,S.c)}<span>=</span>`;
+
+function resultHtml(N,D){
+  let s = `<span class="result">${frac(N,D)}</span>`;
+  if(D===1) return `<span class="mixed">${N}</span>`;
+  if(N>D){
+    const w = Math.floor(N/D), r = N % D;
+    s += `<span class="eqs">=</span><span class="mixed"><span>${w}</span>${frac(r,D)}</span>`;
+  }
+  return s;
+}
+
+function render(){
+  const idx = stepIndex();
+  document.querySelectorAll('#steps li').forEach(li => {
+    const s = +li.dataset.s;
+    li.className = s < idx ? 'done' : (s === idx ? 'active' : '');
+  });
+  const P = $('prompt'), H = $('history'), G = $('stage'), X = $('extra');
+  H.innerHTML = ''; X.innerHTML = '';
+
+  if(S.step === 'flip'){
+    P.innerHTML = 'Schritt 1: <strong>Welcher Bruch wird zum Kehrbruch?</strong> Tippe ihn an.';
+    G.innerHTML = `<button type="button" class="frac-btn" data-act="flip" data-w="1">${frac(S.a,S.b)}</button><span class="op">:</span><button type="button" class="frac-btn" id="second" data-act="flip" data-w="2">${frac(S.c,S.d)}</button>`;
+  }
+  else if(S.step === 'sign'){
+    P.innerHTML = 'Aus dem Geteilt-Zeichen wird ein Mal-Zeichen. <strong>Tippe auf das „:“.</strong>';
+    G.innerHTML = `<span class="frac-static">${frac(S.a,S.b)}</span><button type="button" class="op-btn" data-act="sign" aria-label="Rechenzeichen umwandeln">:</button><span class="hl">${frac(S.d,S.c)}</span>`;
+  }
+  else if(S.step === 'cancel'){
+    P.innerHTML = 'Schritt 2: <strong>Über Kreuz kürzen.</strong> Tippe eine Zahl oben und eine Zahl unten an.';
+    H.innerHTML = histStart();
+    G.innerHTML = bigFrac(false);
+    let panel = '';
+    if(S.selT!==null && S.selB!==null){
+      const x = cur(S.top[S.selT]), y = cur(S.bot[S.selB]);
+      panel = `<div class="panel"><label for="divisor">${x} und ${y} kürzen durch</label><input type="number" id="divisor" min="2" inputmode="numeric" autocomplete="off"><button type="button" class="btn" data-act="cut">Kürzen</button></div>`;
+    }
+    X.innerHTML = panel + `<div class="actions"><button type="button" class="btn ghost" data-act="tip">Tipp</button><button type="button" class="btn ghost" data-act="nomore">Nichts mehr zu kürzen →</button></div>`;
+    const inp = $('divisor'); if(inp) inp.focus();
+  }
+  else if(S.step === 'calc'){
+    P.innerHTML = 'Schritt 3: <strong>Zähler mal Zähler, Nenner mal Nenner.</strong>';
+    H.innerHTML = histStart();
+    G.innerHTML = bigFrac(true) + `<span class="op">=</span><span class="ans"><input type="number" id="rn" aria-label="Zähler des Ergebnisses" inputmode="numeric" autocomplete="off"><span class="bar"></span><input type="number" id="rd" aria-label="Nenner des Ergebnisses" inputmode="numeric" autocomplete="off"></span>`;
+    X.innerHTML = `<div class="actions"><button type="button" class="btn" data-act="check">Prüfen</button></div>`;
+    $('rn').focus();
+  }
+  else if(S.step === 'done'){
+    const N = cur(S.top[0])*cur(S.top[1]), D = cur(S.bot[0])*cur(S.bot[1]);
+    P.innerHTML = 'Geschafft! So sieht dein Rechenweg im Heft aus:';
+    H.innerHTML = '';
+    G.innerHTML = `${frac(S.a,S.b)}<span class="op">:</span>${frac(S.c,S.d)}<span class="eqs">=</span>${frac(S.a,S.b)}<span class="op">·</span>${frac(S.d,S.c)}<span class="eqs">=</span>${bigFrac(true)}<span class="eqs">=</span>${resultHtml(N,D)}`;
+    const note = S.err===0 ? 'Fehlerfrei gelöst.' : `Gelöst mit ${S.err} ${S.err===1?'Fehlversuch':'Fehlversuchen'}.`;
+    X.innerHTML = `<p class="done-note">${note}${N>D && D>1 ? ' Unechte Brüche kannst du als gemischte Zahl schreiben.' : ''}</p><div class="actions"><button type="button" class="btn" data-act="next">Nächste Aufgabe →</button></div>`;
+  }
+}
+
+function anyCancel(){
+  for(const t of S.top) for(const b of S.bot) if(gcd(cur(t),cur(b))>1) return [cur(t),cur(b),gcd(cur(t),cur(b))];
+  return null;
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el || !S) return;
+  const act = el.dataset.act;
+
+  if(act === 'flip'){
+    if(el.dataset.w === '1'){
+      mistake('Nicht der erste Bruch! Umgedreht wird nur der Bruch, <b>durch den</b> du teilst – also der zweite.', el);
+      return;
+    }
+    el.classList.add('flip');
+    setTimeout(() => { el.innerHTML = frac(S.d,S.c); }, 220);
+    setTimeout(() => {
+      S.step = 'sign';
+      fb(`Richtig! Aus ${frac(S.c,S.d)} wird der Kehrbruch ${frac(S.d,S.c)}. Zähler und Nenner tauschen die Plätze.`.replace(/class="frac /g,'class="frac inline '), 'ok');
+      render();
+    }, 480);
+  }
+  else if(act === 'sign'){
+    el.textContent = '·';
+    fb('Genau: Teilen durch einen Bruch = mal seinen Kehrbruch. Jetzt schreibst du alles auf einen Bruchstrich.', 'ok');
+    setTimeout(() => { S.step = 'cancel'; render(); }, 650);
+  }
+  else if(act === 'sel'){
+    const i = +el.dataset.i;
+    if(el.dataset.side === 't') S.selT = (S.selT===i ? null : i);
+    else S.selB = (S.selB===i ? null : i);
+    render();
+  }
+  else if(act === 'cut') doCut();
+  else if(act === 'tip'){
+    const c = anyCancel();
+    if(c) fb(`Tipp: Schau dir <b>${c[0]}</b> (oben) und <b>${c[1]}</b> (unten) an. Beide sind in der ${c[2]}er-Reihe.`, 'info');
+    else fb('Hier lässt sich nichts mehr kürzen. Tippe auf „Nichts mehr zu kürzen“.', 'info');
+  }
+  else if(act === 'nomore'){
+    const c = anyCancel();
+    if(c){ mistake('Da geht noch was! Vergleiche jede Zahl oben mit jeder Zahl unten.', $('stage')); return; }
+    S.step = 'calc'; S.selT = S.selB = null;
+    fb('Alles gekürzt. Jetzt sind die Zahlen klein und das Multiplizieren wird leicht.', 'ok');
+    render();
+  }
+  else if(act === 'check') doCheck();
+  else if(act === 'next') newTask();
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter' || !S) return;
+  if(e.target.id === 'divisor') doCut();
+  if(e.target.id === 'rn'){ $('rd').focus(); }
+  else if(e.target.id === 'rd') doCheck();
+});
+
+function doCut(){
+  const inp = $('divisor'); if(!inp) return;
+  const x = cur(S.top[S.selT]), y = cur(S.bot[S.selB]), k = parseInt(inp.value,10), g = gcd(x,y);
+  if(!k || k < 2){ fb('Gib eine Zahl größer als 1 ein.', 'err'); shake(inp); return; }
+  if(g === 1){ mistake(`${x} und ${y} haben keinen gemeinsamen Teiler (außer 1). Wähle ein anderes Paar.`, inp); return; }
+  if(x % k || y % k){
+    const bad = x % k ? x : y;
+    mistake(`${k} passt nicht: ${bad} : ${k} geht nicht glatt auf. Suche eine Zahl, die in beiden Einmaleins-Reihen vorkommt.`, inp);
+    return;
+  }
+  S.top[S.selT].push(x/k); S.bot[S.selB].push(y/k);
+  S.selT = S.selB = null;
+  const more = k < g ? ` Da geht noch mehr: ${x/k} und ${y/k} kannst du weiter kürzen.` : '';
+  fb(`Gekürzt durch ${k}: ${x} → ${x/k} und ${y} → ${y/k}.${more}`, 'ok');
+  render();
+}
+
+function doCheck(){
+  const n = parseInt($('rn').value,10), d = parseInt($('rd').value,10);
+  const t0 = cur(S.top[0]), t1 = cur(S.top[1]), b0 = cur(S.bot[0]), b1 = cur(S.bot[1]);
+  const N = t0*t1, D = b0*b1;
+  if(n === N && d === D){
+    solved++; if(S.err===0) perfect++;
+    $('stats').innerHTML = `Gelöst: <b>${solved}</b> · fehlerfrei: <b>${perfect}</b>`;
+    S.step = 'done';
+    fb('Richtig gerechnet!', 'ok');
+    render();
+    return;
+  }
+  const msgs = [];
+  if(n !== N) msgs.push(`Zähler: ${t0} · ${t1} = ?`);
+  if(d !== D) msgs.push(`Nenner: ${b0} · ${b1} = ?`);
+  if(n && d && n*D === d*N) msgs.unshift('Der Wert stimmt, aber benutze die gekürzten Zahlen.');
+  mistake('Noch nicht ganz. ' + msgs.join(' &nbsp; '), $('stage'));
+}
+
+/* Levels */
+function setLevel(l){
+  level = l;
+  $('lvl-easy').setAttribute('aria-pressed', l==='easy');
+  $('lvl-hard').setAttribute('aria-pressed', l==='hard');
+  first = false; newTask();
+}
+$('lvl-easy').addEventListener('click', () => setLevel('easy'));
+$('lvl-hard').addEventListener('click', () => setLevel('hard'));
+
+
+newTask();
+})();
+</script>
+
+</body></html>
