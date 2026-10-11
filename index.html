@@ -1,0 +1,605 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Bruch-Division Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Caveat:wght@600;700&display=swap">
+<style>
+/* Layout: Heftblatt (Karopapier); oben Einstellungen (Stufe, Modus, Aufgabenarten), Mitte die Aufgabenkarte, unten Merkkasten */
+:root{
+  --paper:#f8fafd; --grid:#dfe7f3; --card:#ffffff; --ink:#1d3b86; --text:#1c2333; --muted:#5a6680;
+  --red:#cf3527; --ok:#1d8249; --okbg:#e5f5ec; --errbg:#fdeceb; --marker:#fff1a8; --line:#c9d4e6;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-hand:"Caveat", "Comic Sans MS", cursive;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111726; --grid:#1b2438; --card:#172035; --ink:#9fb9ff; --text:#e6ebf5; --muted:#98a4bd;
+  --red:#ff7f70; --ok:#62d392; --okbg:#153325; --errbg:#3a1c1c; --marker:#5a4c12; --line:#2d3a55; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111726; --grid:#1b2438; --card:#172035; --ink:#9fb9ff; --text:#e6ebf5; --muted:#98a4bd;
+  --red:#ff7f70; --ok:#62d392; --okbg:#153325; --errbg:#3a1c1c; --marker:#5a4c12; --line:#2d3a55; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:20px 20px;color:var(--text);font-family:var(--f-body);font-size:17px;line-height:1.5}
+.wrap{max-width:940px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;gap:20px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);line-height:1.05;margin:0;color:var(--ink);text-wrap:balance}
+.sub{margin:6px 0 0;color:var(--muted);max-width:60ch}
+h2{font-family:var(--f-display);font-weight:800;font-size:1.15rem;margin:0 0 10px;color:var(--ink)}
+.stats{display:flex;gap:16px;font-size:.92rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{display:block;font-size:1.5rem;line-height:1.1;color:var(--text);font-family:var(--f-display)}
+
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px clamp(14px,3vw,28px);box-shadow:0 2px 0 var(--line)}
+.settings{display:grid;gap:14px}
+.setrow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.setrow .lbl{font-weight:700;font-size:.92rem;color:var(--muted);min-width:7.5em}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-weight:700;font-size:.9rem;border:0;background:var(--card);color:var(--ink);padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.types{display:flex;flex-wrap:wrap;gap:6px}
+.tchip{font:inherit;font-size:.86rem;font-weight:700;color:var(--muted);background:transparent;border:2px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+.tchip[aria-pressed="true"]{color:var(--ink);border-color:var(--ink);background:color-mix(in srgb,var(--ink) 9%,transparent)}
+.tchip[aria-pressed="true"]::before{content:"✓ "}
+.pool{font-size:.86rem;color:var(--muted);margin:0}
+
+.taskhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.badge{font-size:.82rem;font-weight:700;color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent);border-radius:999px;padding:3px 10px}
+.link{font:inherit;font-size:.9rem;font-weight:700;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px}
+.steps{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.steps li{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 5px;border-radius:999px;border:2px solid var(--line);color:var(--muted);font-weight:700;font-size:.88rem}
+.steps li span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--line);color:var(--text);font-size:.78rem}
+.steps li.active{border-color:var(--ink);color:var(--ink)}
+.steps li.active span{background:var(--ink);color:var(--card)}
+.steps li.done{border-color:var(--ok);color:var(--ok)}
+.steps li.done span{background:var(--ok);color:var(--card)}
+.prompt{font-size:1.06rem;margin:0 0 6px;min-height:1.5em}
+.prompt strong{background:linear-gradient(transparent 55%,var(--marker) 55%)}
+
+.history{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;color:var(--muted);font-size:1.2rem;margin:8px 0 0}
+.stage{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 14px;min-height:170px;padding:16px 0;font-size:2.5rem}
+.stage.path{font-size:1.8rem;gap:8px 10px}
+.frac{display:inline-flex;flex-direction:column;align-items:center;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums;vertical-align:middle}
+.frac .bar{align-self:stretch;height:3px;background:currentColor;border-radius:2px;margin:4px 0}
+.frac>span:not(.bar){padding:0 .15em}
+.history .frac .bar,.feedback .frac .bar,.merke .frac .bar{height:2px;margin:2px 0}
+.feedback .frac,.merke .frac{font-size:.85em}
+.mixop{display:inline-flex;align-items:center;gap:.08em;font-weight:700}
+.mixop>.w{font-size:1.15em}
+.int{font-weight:700}
+.op{font-weight:700;min-width:.8em;text-align:center}
+.eqs{color:var(--muted)}
+.opnd{color:var(--ink)}
+
+.convrows{display:grid;gap:14px;justify-items:center;width:100%}
+.convrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center}
+.convrow.ok .ans input{border-color:var(--ok);color:var(--ok)}
+.frac-btn{font:inherit;color:var(--ink);background:transparent;border:2px dashed var(--line);border-radius:12px;padding:8px 16px;cursor:pointer}
+.frac-btn:hover{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.op-btn{font:inherit;font-weight:700;color:var(--red);background:transparent;border:2px dashed var(--red);border-radius:50%;width:1.4em;height:1.4em;line-height:1;cursor:pointer;animation:pulse 1.2s ease-in-out infinite}
+.hl{color:var(--ink);background:var(--marker);border-radius:10px;padding:6px 14px}
+.frac-static{color:var(--ink);padding:8px 16px}
+
+.big{display:inline-flex;flex-direction:column;align-items:center}
+.big .row{display:flex;gap:8px;align-items:flex-end}
+.big .row.bot{align-items:flex-start}
+.big .bar{align-self:stretch;height:4px;background:var(--text);border-radius:2px;margin:6px 0}
+.big .dot{font-weight:700;align-self:center}
+.chip{font:inherit;font-weight:700;color:var(--ink);background:transparent;border:2px solid transparent;border-radius:12px;padding:2px 10px;cursor:pointer;display:inline-flex;align-items:center;line-height:1.05;font-variant-numeric:tabular-nums}
+.row.top .chip{flex-direction:column-reverse}
+.row.bot .chip{flex-direction:column}
+.chip:hover{border-color:var(--line)}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--marker)}
+.chip:disabled{cursor:default}
+.chip:disabled:hover{border-color:transparent}
+.chip .v{padding:0 .12em}
+.chip .v.new{font-family:var(--f-hand);color:var(--red);font-size:.78em;line-height:1}
+.chip .v.old{background:linear-gradient(to top right,transparent calc(50% - 2px),var(--red) calc(50% - 2px),var(--red) calc(50% + 2px),transparent calc(50% + 2px));opacity:.6}
+
+.panel{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+.panel label{font-weight:700}
+input[type=number]{font:inherit;font-weight:700;width:3.6em;padding:4px 6px;border:2px solid var(--line);border-radius:10px;background:var(--paper);color:var(--text);text-align:center;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.ans{display:inline-flex;flex-direction:column;align-items:center;gap:5px}
+.ans input{font-size:1.9rem;width:2.6em}
+.ans .bar{align-self:stretch;height:4px;background:var(--text);border-radius:2px}
+.mixin{display:inline-flex;align-items:center;gap:6px}
+.mixin .whole{font-size:2.3rem;width:1.9em;padding:8px 4px}
+
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:9px 18px;cursor:pointer;border:2px solid var(--ink);background:var(--ink);color:var(--card)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.feedback{margin-top:14px;padding:10px 14px;border-radius:10px;font-weight:700}
+.feedback:empty{display:none}
+.feedback.ok{background:var(--okbg);color:var(--ok)}
+.feedback.err{background:var(--errbg);color:var(--red)}
+.feedback.info{background:color-mix(in srgb,var(--marker) 60%,transparent);color:var(--text)}
+.res{color:var(--ok)}
+.done-note{text-align:center;color:var(--muted);margin:0}
+
+.merke{border-color:var(--red)}
+.merke h2{color:var(--red)}
+.merke p{margin:0 0 10px;font-weight:700}
+.merke ol{margin:0;padding-left:1.3em;display:grid;gap:8px;max-width:70ch}
+
+.shake{animation:shake .4s}
+.flip{animation:flip .44s ease-in-out}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+@keyframes pulse{50%{transform:scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.shake,.flip,.op-btn{animation:none}}
+@media (max-width:520px){.stage{font-size:1.9rem}.stage.path{font-size:1.35rem}.history{font-size:1rem}.setrow .lbl{min-width:0;width:100%}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Bruch-Division Training</h1>
+      <p class="sub">Brüche, gemischte Zahlen und ganze Zahlen dividieren. Jede Aufgabe wird neu ausgelost.</p>
+    </div>
+    <div class="stats" aria-live="polite">
+      <div><b id="st-solved">0</b>gelöst</div>
+      <div><b id="st-perfect">0</b>fehlerfrei</div>
+      <div><b id="st-streak">0</b>Serie</div>
+    </div>
+  </header>
+
+  <section class="card settings" aria-label="Einstellungen">
+    <div class="setrow">
+      <span class="lbl">Stufe</span>
+      <div class="seg" role="group" aria-label="Stufe">
+        <button type="button" data-level="easy" aria-pressed="true">Einstieg</button>
+        <button type="button" data-level="hard" aria-pressed="false">Profi</button>
+      </div>
+      <span class="lbl" style="min-width:auto">Modus</span>
+      <div class="seg" role="group" aria-label="Modus">
+        <button type="button" data-mode="steps" aria-pressed="true">Schritt für Schritt</button>
+        <button type="button" data-mode="direct" aria-pressed="false">Nur Ergebnis</button>
+      </div>
+    </div>
+    <div class="setrow">
+      <span class="lbl">Aufgabenarten</span>
+      <div class="types" id="types"></div>
+    </div>
+    <p class="pool" id="pool"></p>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <div class="taskhead">
+      <span class="badge" id="badge"></span>
+      <button type="button" class="link" data-act="skip">Andere Aufgabe</button>
+    </div>
+    <ol class="steps" id="steps"></ol>
+    <p class="prompt" id="prompt"></p>
+    <div class="history" id="history"></div>
+    <div class="stage" id="stage"></div>
+    <div id="extra"></div>
+    <div class="feedback" id="feedback"></div>
+  </section>
+
+  <section class="card merke">
+    <h2>Merke</h2>
+    <p>Man dividiert durch einen Bruch, indem man mit seinem Kehrbruch multipliziert.</p>
+    <ol>
+      <li><b>Umwandeln:</b> Gemischte Zahlen und ganze Zahlen zuerst als Bruch schreiben.
+        <span class="mixop"><span class="w">2</span><span class="frac"><span>3</span><span class="bar"></span><span>4</span></span></span> = <span class="frac"><span>2·4+3</span><span class="bar"></span><span>4</span></span> = <span class="frac"><span>11</span><span class="bar"></span><span>4</span></span> &nbsp; und &nbsp; 5 = <span class="frac"><span>5</span><span class="bar"></span><span>1</span></span></li>
+      <li><b>Kehrbruch:</b> Den zweiten Bruch umdrehen. Aus <b>:</b> wird <b>·</b></li>
+      <li><b>Kürzen:</b> Vor dem Multiplizieren über Kreuz kürzen.</li>
+      <li><b>Berechnen:</b> Zähler mal Zähler, Nenner mal Nenner.</li>
+      <li><b>Ergebnis:</b> Einen unechten Bruch als gemischte Zahl schreiben.</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const gcd = (x,y) => { while(y){ [x,y] = [y, x % y]; } return x; };
+const rnd = (lo,hi) => lo + Math.floor(Math.random()*(hi-lo+1));
+const frac = (n,d,cls='') => `<span class="frac ${cls}"><span>${n}</span><span class="bar"></span><span>${d}</span></span>`;
+const cur = arr => arr[arr.length-1];
+const NAMES = {2:'Halbe',3:'Drittel',4:'Viertel',5:'Fünftel',6:'Sechstel',7:'Siebtel',8:'Achtel',9:'Neuntel',10:'Zehntel',11:'Elftel',12:'Zwölftel'};
+
+const TYPES = [
+  ['ff','Bruch : Bruch'], ['fm','Bruch : gemischte Zahl'], ['mf','gemischte Zahl : Bruch'],
+  ['fi','Bruch : ganze Zahl'], ['if','ganze Zahl : Bruch'], ['mm','gemischte Zahl : gemischte Zahl'],
+  ['mi','gemischte Zahl : ganze Zahl'], ['im','ganze Zahl : gemischte Zahl']
+];
+const LEVELS = {
+  easy: {fd:10, mw:3, md:8,  i:10, lim:60},
+  hard: {fd:15, mw:6, md:12, i:20, lim:150}
+};
+// Anzahl möglicher Aufgaben je Art (vorab ausgezählt mit denselben Regeln wie unten)
+const POOL = {
+  easy: {ff:876, fm:1084, mf:1084, fi:234, if:234, mm:2202, mi:518, im:518},
+  hard: {ff:4822, fm:9136, mf:9136, fi:1064, if:1064, mm:34326, mi:4457, im:4457}
+};
+
+let level = 'easy', mode = 'steps', active = new Set(TYPES.map(t => t[0]));
+let solved = 0, perfect = 0, streak = 0, S = null;
+
+/* Schon gestellte Aufgaben merken, damit sie sich nicht wiederholen */
+let seen = new Set();
+try { seen = new Set(JSON.parse(localStorage.getItem('bd-seen') || '[]')); } catch(e){}
+function remember(k){
+  seen.add(k);
+  try { localStorage.setItem('bd-seen', JSON.stringify([...seen].slice(-8000))); } catch(e){}
+}
+
+/* ---------- Aufgaben erzeugen ---------- */
+function properFrac(maxD){ for(;;){ const d = rnd(2,maxD), n = rnd(1,d-1); if(gcd(n,d)===1) return [n,d]; } }
+function makeOp(k,P){
+  if(k==='f'){ const [n,d] = properFrac(P.fd); return {k,n,d,N:n,D:d}; }
+  if(k==='m'){ const w = rnd(1,P.mw); const [n,d] = properFrac(P.md); return {k,w,n,d,N:w*d+n,D:d}; }
+  const v = rnd(2,P.i); return {k:'i',v,N:v,D:1};
+}
+const opKey = o => o.k==='m' ? `${o.w} ${o.n}/${o.d}` : o.k==='f' ? `${o.n}/${o.d}` : `${o.v}`;
+const opHtml = o => o.k==='m' ? `<span class="mixop opnd"><span class="w">${o.w}</span>${frac(o.n,o.d)}</span>`
+                  : o.k==='f' ? `<span class="opnd">${frac(o.n,o.d)}</span>` : `<span class="int opnd">${o.v}</span>`;
+
+function generate(){
+  const P = LEVELS[level], list = [...active];
+  let best = null;
+  for(let i=0;i<6000;i++){
+    const t = list[rnd(0,list.length-1)];
+    const A = makeOp(t[0],P), B = makeOp(t[1],P);
+    if(A.N===B.N && A.D===B.D) continue;
+    const N = A.N*B.D, D = A.D*B.N, g = gcd(N,D);
+    if(N/g > P.lim || D/g > P.lim) continue;
+    const key = level+'|'+opKey(A)+':'+opKey(B);
+    best = {t,A,B,key};
+    if(seen.has(key) && i < 5000) continue;
+    const cancel = gcd(A.N,B.N)>1 || gcd(B.D,A.D)>1;
+    if(!cancel && Math.random() < .6 && i < 3000) continue; // meistens soll es etwas zu kürzen geben
+    return best;
+  }
+  return best;
+}
+
+function newTask(){
+  const g = generate();
+  remember(g.key);
+  const {A,B} = g;
+  const needConv = A.k!=='f' || B.k!=='f';
+  S = {type:g.t, A, B, a:A.N, b:A.D, c:B.N, d:B.D, needConv, convOk:{A:A.k==='f', B:B.k==='f'},
+       top:[[A.N],[B.D]], bot:[[A.D],[B.N]], selT:null, selB:null, err:0, wrong:0, helped:false};
+  S.step = mode==='direct' ? 'direct' : (needConv ? 'conv' : 'flip');
+  $('badge').textContent = TYPES.find(t => t[0]===g.t)[1];
+  fb('', '');
+  render();
+}
+
+/* ---------- Hilfsfunktionen ---------- */
+function fb(msg, kind){ const f = $('feedback'); f.className = 'feedback ' + kind; f.innerHTML = msg; }
+function shake(el){ if(!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+function mistake(msg, el){ S.err++; fb(msg, 'err'); shake(el); }
+const resN = () => cur(S.top[0])*cur(S.top[1]);
+const resD = () => cur(S.bot[0])*cur(S.bot[1]);
+const intv = id => { const el = $(id); if(!el || el.value.trim()==='') return null; const v = parseInt(el.value,10); return isNaN(v) ? null : v; };
+const ansBox = (idN, idD, lbl) => `<span class="ans"><input type="number" id="${idN}" aria-label="Zähler ${lbl}" inputmode="numeric" autocomplete="off"><span class="bar"></span><input type="number" id="${idD}" aria-label="Nenner ${lbl}" inputmode="numeric" autocomplete="off"></span>`;
+const mixBox = () => `<span class="mixin"><input type="number" class="whole" id="mw" aria-label="Ganze" inputmode="numeric" autocomplete="off">${ansBox('mn','md','Bruchteil')}</span>`;
+
+function mixedHtml(N,D,cls='res'){
+  if(D===1) return `<span class="int ${cls}">${N}</span>`;
+  if(N<D) return `<span class="${cls}">${frac(N,D)}</span>`;
+  return `<span class="mixop ${cls}"><span class="w">${Math.floor(N/D)}</span>${frac(N%D,D)}</span>`;
+}
+
+function chip(arr, side, i, disabled){
+  const pressed = (side==='t' ? S.selT===i : S.selB===i);
+  const vals = arr.map((v,k) => `<span class="v ${k===0?'orig':'new'}${k<arr.length-1?' old':''}">${v}</span>`).join('');
+  return `<button type="button" class="chip" data-act="sel" data-side="${side}" data-i="${i}" aria-pressed="${pressed}" ${disabled?'disabled':''} aria-label="${side==='t'?'Zähler':'Nenner'} ${cur(arr)}">${vals}</button>`;
+}
+function bigFrac(disabled){
+  return `<span class="big">
+    <span class="row top">${chip(S.top[0],'t',0,disabled)}<span class="dot">·</span>${chip(S.top[1],'t',1,disabled)}</span>
+    <span class="bar"></span>
+    <span class="row bot">${chip(S.bot[0],'b',0,disabled)}<span class="dot">·</span>${chip(S.bot[1],'b',1,disabled)}</span>
+  </span>`;
+}
+function histStart(withFlip){
+  let s = '';
+  if(S.needConv) s += `${opHtml(S.A)}<span>:</span>${opHtml(S.B)}<span>=</span>`;
+  s += `${frac(S.a,S.b)}<span>:</span>${frac(S.c,S.d)}<span>=</span>`;
+  if(withFlip) s += `${frac(S.a,S.b)}<span>·</span>${frac(S.d,S.c)}<span>=</span>`;
+  return s;
+}
+function pathHtml(){
+  const N = resN(), D = resD();
+  let s = `${opHtml(S.A)}<span class="op">:</span>${opHtml(S.B)}<span class="eqs">=</span>`;
+  if(S.needConv) s += `${frac(S.a,S.b)}<span class="op">:</span>${frac(S.c,S.d)}<span class="eqs">=</span>`;
+  s += `${frac(S.a,S.b)}<span class="op">·</span>${frac(S.d,S.c)}<span class="eqs">=</span>${bigFrac(true)}<span class="eqs">=</span>`;
+  if(D===1) s += `<span class="int res">${N}</span>`;
+  else { s += `<span class="res">${frac(N,D)}</span>`; if(N>D) s += `<span class="eqs">=</span>${mixedHtml(N,D)}`; }
+  return s;
+}
+function autoCancel(){
+  for(let guard=0; guard<10; guard++){
+    let did = false;
+    for(let i=0;i<2;i++) for(let j=0;j<2;j++){
+      const x = cur(S.top[i]), y = cur(S.bot[j]), g = gcd(x,y);
+      if(g>1){ S.top[i].push(x/g); S.bot[j].push(y/g); did = true; }
+    }
+    if(!did) break;
+  }
+}
+function anyCancel(){
+  for(const t of S.top) for(const b of S.bot){ const g = gcd(cur(t),cur(b)); if(g>1) return [cur(t),cur(b),g]; }
+  return null;
+}
+
+/* ---------- Schrittleiste ---------- */
+function stepList(){
+  const l = [];
+  if(S.needConv) l.push(['conv','Umwandeln']);
+  l.push(['flip','Kehrbruch'], ['cancel','Kürzen'], ['calc','Berechnen']);
+  const N = S.a*S.d, D = S.b*S.c, g = gcd(N,D);
+  if(N/g > D/g && D/g !== 1) l.push(['mix','Gemischte Zahl']);
+  return l;
+}
+function drawSteps(){
+  const el = $('steps');
+  if(mode==='direct'){ el.hidden = true; return; }
+  el.hidden = false;
+  const l = stepList();
+  const map = {conv:'conv', flip:'flip', sign:'flip', cancel:'cancel', calc:'calc', mix:'mix'};
+  const curKey = map[S.step];
+  let idx = S.step==='done' ? l.length : l.findIndex(x => x[0]===curKey);
+  el.innerHTML = l.map((x,i) => `<li class="${i<idx?'done':(i===idx?'active':'')}"><span>${i+1}</span>${x[1]}</li>`).join('');
+}
+
+/* ---------- Darstellung ---------- */
+function render(){
+  drawSteps();
+  const P = $('prompt'), H = $('history'), G = $('stage'), X = $('extra');
+  H.innerHTML = ''; X.innerHTML = ''; G.className = 'stage';
+  const n = stepList().findIndex(x => x[0] === ({sign:'flip'}[S.step] || S.step)) + 1;
+
+  if(S.step === 'conv'){
+    P.innerHTML = `Schritt ${n}: <strong>Schreibe als Bruch.</strong> Gemischte Zahlen und ganze Zahlen werden zuerst umgewandelt.`;
+    G.innerHTML = `${opHtml(S.A)}<span class="op">:</span>${opHtml(S.B)}`;
+    let rows = '';
+    for(const side of ['A','B']){
+      const o = S[side]; if(o.k==='f') continue;
+      const done = S.convOk[side];
+      rows += `<div class="convrow ${done?'ok':''}">${opHtml(o)}<span class="op">=</span>${done ? `<span class="res">${frac(o.N,o.D)}</span>` : ansBox('c'+side+'n','c'+side+'d', o.k==='m' ? `für ${o.w} ${o.n}/${o.d}` : `für ${o.v}`)}</div>`;
+    }
+    X.innerHTML = `<div class="convrows" style="font-size:2rem">${rows}</div><div class="actions"><button type="button" class="btn ghost" data-act="convtip">Tipp</button><button type="button" class="btn" data-act="conv">Prüfen</button></div>`;
+    const f = X.querySelector('input'); if(f) f.focus();
+  }
+  else if(S.step === 'flip'){
+    P.innerHTML = `Schritt ${n}: <strong>Welcher Bruch wird zum Kehrbruch?</strong> Tippe ihn an.`;
+    if(S.needConv) H.innerHTML = `${opHtml(S.A)}<span>:</span>${opHtml(S.B)}<span>=</span>`;
+    G.innerHTML = `<button type="button" class="frac-btn" data-act="flip" data-w="1">${frac(S.a,S.b)}</button><span class="op">:</span><button type="button" class="frac-btn" data-act="flip" data-w="2">${frac(S.c,S.d)}</button>`;
+  }
+  else if(S.step === 'sign'){
+    P.innerHTML = 'Aus dem Geteilt-Zeichen wird ein Mal-Zeichen. <strong>Tippe auf das „:“.</strong>';
+    if(S.needConv) H.innerHTML = `${opHtml(S.A)}<span>:</span>${opHtml(S.B)}<span>=</span>`;
+    G.innerHTML = `<span class="frac-static">${frac(S.a,S.b)}</span><button type="button" class="op-btn" data-act="sign" aria-label="Rechenzeichen umwandeln">:</button><span class="hl">${frac(S.d,S.c)}</span>`;
+  }
+  else if(S.step === 'cancel'){
+    P.innerHTML = `Schritt ${n}: <strong>Über Kreuz kürzen.</strong> Tippe eine Zahl oben und eine Zahl unten an.`;
+    H.innerHTML = histStart(true);
+    G.innerHTML = bigFrac(false);
+    let panel = '';
+    if(S.selT!==null && S.selB!==null){
+      const x = cur(S.top[S.selT]), y = cur(S.bot[S.selB]);
+      panel = `<div class="panel"><label for="divisor">${x} und ${y} kürzen durch</label><input type="number" id="divisor" min="2" inputmode="numeric" autocomplete="off"><button type="button" class="btn" data-act="cut">Kürzen</button></div>`;
+    }
+    X.innerHTML = panel + `<div class="actions"><button type="button" class="btn ghost" data-act="tip">Tipp</button><button type="button" class="btn ghost" data-act="nomore">Nichts mehr zu kürzen →</button></div>`;
+    const inp = $('divisor'); if(inp) inp.focus();
+  }
+  else if(S.step === 'calc'){
+    P.innerHTML = `Schritt ${n}: <strong>Zähler mal Zähler, Nenner mal Nenner.</strong>`;
+    H.innerHTML = histStart(true);
+    G.innerHTML = bigFrac(true) + `<span class="op">=</span>${ansBox('rn','rd','des Ergebnisses')}`;
+    X.innerHTML = `<div class="actions"><button type="button" class="btn" data-act="check">Prüfen</button></div>`;
+    $('rn').focus();
+  }
+  else if(S.step === 'mix'){
+    const N = resN(), D = resD();
+    P.innerHTML = `Schritt ${n}: <strong>Schreibe als gemischte Zahl.</strong> Wie viele Ganze stecken in ${frac(N,D)}?`;
+    H.innerHTML = histStart(true);
+    G.innerHTML = `<span class="res">${frac(N,D)}</span><span class="op">=</span>${mixBox()}`;
+    X.innerHTML = `<div class="actions"><button type="button" class="btn ghost" data-act="mixtip">Tipp</button><button type="button" class="btn" data-act="mixcheck">Prüfen</button></div>`;
+    $('mw').focus();
+  }
+  else if(S.step === 'direct'){
+    P.innerHTML = '<strong>Rechne im Heft</strong> und trage das Ergebnis ein. Vollständig gekürzt, unechte Brüche als gemischte Zahl.';
+    G.innerHTML = `${opHtml(S.A)}<span class="op">:</span>${opHtml(S.B)}<span class="op">=</span>${mixBox()}`;
+    X.innerHTML = `<p class="done-note">Ganze Zahl als Ergebnis? Dann nur das linke Feld ausfüllen.</p><div class="actions">${S.wrong>=2?'<button type="button" class="btn ghost" data-act="solution">Lösungsweg zeigen</button>':''}<button type="button" class="btn" data-act="direct">Prüfen</button></div>`;
+    $('mw').focus();
+  }
+  else if(S.step === 'done'){
+    P.innerHTML = S.helped ? 'So wird die Aufgabe gerechnet:' : 'Geschafft! So sieht der Rechenweg im Heft aus:';
+    G.className = 'stage path';
+    G.innerHTML = pathHtml();
+    const note = S.helped ? 'Rechne die Aufgabe noch einmal selbst im Heft nach.'
+               : S.err===0 ? 'Fehlerfrei gelöst.' : `Gelöst mit ${S.err} ${S.err===1?'Fehlversuch':'Fehlversuchen'}.`;
+    X.innerHTML = `<p class="done-note">${note}</p><div class="actions"><button type="button" class="btn" data-act="next">Nächste Aufgabe →</button></div>`;
+    X.querySelector('.btn').focus();
+  }
+}
+
+function finish(){
+  if(!S.helped){
+    solved++;
+    if(S.err===0){ perfect++; streak++; } else streak = 0;
+  } else streak = 0;
+  $('st-solved').textContent = solved; $('st-perfect').textContent = perfect; $('st-streak').textContent = streak;
+  S.step = 'done'; render();
+}
+
+/* ---------- Prüfungen ---------- */
+function doConv(){
+  const msgs = [];
+  for(const side of ['A','B']){
+    const o = S[side]; if(o.k==='f' || S.convOk[side]) continue;
+    const n = intv('c'+side+'n'), d = intv('c'+side+'d');
+    if(n===o.N && d===o.D){ S.convOk[side] = true; continue; }
+    if(n===null || d===null){ msgs.push('Fülle Zähler und Nenner aus.'); continue; }
+    if(o.k==='i'){
+      if(d!==1 && n*1===o.N*d) msgs.push(`${n}/${d} hat zwar den richtigen Wert, aber nimm den Nenner 1: ${o.v} = ${o.v}/1.`);
+      else msgs.push(`Eine ganze Zahl bekommt den Nenner 1: ${o.v} = ${frac(o.v,1)}`);
+    } else {
+      if(d!==o.D) msgs.push(`Bei ${o.w} ${frac(o.n,o.d)} bleibt der Nenner ${o.d}.`);
+      else if(n===o.w*o.n + o.d || n===o.w+o.n) msgs.push(`Zähler: Ganze <b>mal</b> Nenner, dann plus Zähler: ${o.w} · ${o.d} + ${o.n} = ?`);
+      else msgs.push(`Zähler von ${o.w} ${frac(o.n,o.d)}: ${o.w} · ${o.d} + ${o.n} = ?`);
+    }
+  }
+  if(msgs.length){ S.err++; render(); fb(msgs.join(' '),'err'); shake($('extra').querySelector('.convrow:not(.ok)')); return; }
+  fb('Richtig umgewandelt. Jetzt geht es weiter wie bei Bruch : Bruch.', 'ok');
+  S.step = 'flip'; render();
+}
+
+function doCut(){
+  const inp = $('divisor'); if(!inp) return;
+  const x = cur(S.top[S.selT]), y = cur(S.bot[S.selB]), k = parseInt(inp.value,10), g = gcd(x,y);
+  if(!k || k < 2){ fb('Gib eine Zahl größer als 1 ein.', 'err'); shake(inp); return; }
+  if(g === 1){ mistake(`${x} und ${y} haben keinen gemeinsamen Teiler (außer 1). Wähle ein anderes Paar.`, inp); return; }
+  if(x % k || y % k){ const bad = x % k ? x : y; mistake(`${k} passt nicht: ${bad} : ${k} geht nicht glatt auf.`, inp); return; }
+  S.top[S.selT].push(x/k); S.bot[S.selB].push(y/k); S.selT = S.selB = null;
+  const more = k < g ? ` Da geht noch mehr: ${x/k} und ${y/k} kannst du weiter kürzen.` : '';
+  fb(`Gekürzt durch ${k}: ${x} → ${x/k} und ${y} → ${y/k}.${more}`, 'ok');
+  render();
+}
+
+function doCheck(){
+  const n = intv('rn'), d = intv('rd');
+  const t0 = cur(S.top[0]), t1 = cur(S.top[1]), b0 = cur(S.bot[0]), b1 = cur(S.bot[1]);
+  const N = t0*t1, D = b0*b1;
+  if(n === N && d === D){
+    if(N > D && D !== 1){ fb(`Richtig: ${frac(N,D)} ist ein unechter Bruch.`, 'ok'); S.step = 'mix'; render(); }
+    else { fb('Richtig gerechnet!', 'ok'); finish(); }
+    return;
+  }
+  const msgs = [];
+  if(n !== N) msgs.push(`Zähler: ${t0} · ${t1} = ?`);
+  if(d !== D) msgs.push(`Nenner: ${b0} · ${b1} = ?`);
+  mistake('Noch nicht ganz. ' + msgs.join(' &nbsp; '), $('stage'));
+}
+
+function doMix(){
+  const N = resN(), D = resD();
+  const w = intv('mw'), n = intv('mn'), d = intv('md');
+  const W = Math.floor(N/D), R = N % D;
+  if(w===W && n===R && d===D){ fb(`Richtig: ${frac(N,D)} = ${W} ${frac(R,D)}`, 'ok'); finish(); return; }
+  if(w!==W) mistake(`Ganze: Wie oft passt ${D} in ${N}? ${N} : ${D} = ? Rest ?`, $('mw'));
+  else if(d!==D) mistake(`Der Nenner bleibt ${D}.`, $('md'));
+  else mistake(`Der Rest gehört in den Zähler: ${N} − ${W} · ${D} = ?`, $('mn'));
+}
+
+function doDirect(){
+  const N0 = S.a*S.d, D0 = S.b*S.c, g = gcd(N0,D0), N = N0/g, D = D0/g;
+  const w = intv('mw') || 0, n = intv('mn'), d = intv('md');
+  if(intv('mw')===null && (n===null || d===null)){ fb('Trage zuerst ein Ergebnis ein.', 'err'); return; }
+  let vn, vd;
+  if(n===null && d===null){ vn = w; vd = 1; }
+  else if(n===null || d===null || d===0){ fb('Fülle beim Bruch Zähler und Nenner aus.', 'err'); return; }
+  else { vn = w*d + n; vd = d; }
+  if(vn*D !== N*vd){
+    S.wrong++;
+    mistake(S.wrong>=2 ? 'Leider falsch. Schau dir den Lösungsweg an oder versuche es noch einmal.' : 'Leider falsch. Prüfe deinen Rechenweg: Umwandeln, Kehrbruch, kürzen, rechnen.', $('stage'));
+    if(S.wrong===2) render(), fb('Leider falsch. Schau dir den Lösungsweg an oder versuche es noch einmal.','err');
+    return;
+  }
+  // Wert stimmt: Form prüfen
+  if(D===1){
+    if(n!==null && !(d===1 && intv('mw')===null)){ fb(`Der Wert stimmt. Das Ergebnis ist eine ganze Zahl: ${N}. Schreibe nur die ${N}.`, 'info'); return; }
+  } else {
+    if(n!==null && gcd(n,d)!==1){ fb('Der Wert stimmt, aber du kannst noch kürzen.', 'info'); return; }
+    if(n!==null && n>=d){ fb('Der Wert stimmt. Schreibe den unechten Bruch als gemischte Zahl.', 'info'); return; }
+  }
+  autoCancel();
+  fb('Richtig!', 'ok'); finish();
+}
+
+/* ---------- Ereignisse ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el || !S) return;
+  const act = el.dataset.act;
+  if(act === 'conv') doConv();
+  else if(act === 'convtip'){
+    const o = S.convOk.A ? S.B : S.A;
+    if(o.k==='i') fb(`Jede ganze Zahl kann man als Bruch mit Nenner 1 schreiben: ${o.v} = ${frac(o.v,1)}`, 'info');
+    else { const nm = NAMES[o.d]; fb(`${o.w} Ganze sind ${o.w} · ${o.d} = ${o.w*o.d} ${nm}. Dazu kommen noch ${o.n} ${nm}. Der Nenner bleibt ${o.d}.`, 'info'); }
+  }
+  else if(act === 'flip'){
+    if(el.dataset.w === '1'){ mistake('Nicht der erste Bruch! Umgedreht wird nur der Bruch, <b>durch den</b> du teilst, also der zweite.', el); return; }
+    el.classList.add('flip');
+    setTimeout(() => { el.innerHTML = frac(S.d,S.c); }, 220);
+    setTimeout(() => { S.step = 'sign'; fb(`Richtig! Der Kehrbruch von ${frac(S.c,S.d)} ist ${frac(S.d,S.c)}.`, 'ok'); render(); }, 480);
+  }
+  else if(act === 'sign'){
+    el.textContent = '·';
+    fb('Genau: Teilen durch einen Bruch heißt mal seinen Kehrbruch.', 'ok');
+    setTimeout(() => { S.step = 'cancel'; render(); }, 600);
+  }
+  else if(act === 'sel'){
+    const i = +el.dataset.i;
+    if(el.dataset.side === 't') S.selT = (S.selT===i ? null : i); else S.selB = (S.selB===i ? null : i);
+    render();
+  }
+  else if(act === 'cut') doCut();
+  else if(act === 'tip'){
+    const c = anyCancel();
+    if(c) fb(`Tipp: Schau dir <b>${c[0]}</b> (oben) und <b>${c[1]}</b> (unten) an. Beide sind in der ${c[2]}er-Reihe.`, 'info');
+    else fb('Hier lässt sich nichts mehr kürzen. Tippe auf „Nichts mehr zu kürzen“.', 'info');
+  }
+  else if(act === 'nomore'){
+    if(anyCancel()){ mistake('Da geht noch was! Vergleiche jede Zahl oben mit jeder Zahl unten.', $('stage')); return; }
+    S.step = 'calc'; S.selT = S.selB = null;
+    fb('Alles gekürzt. Jetzt wird multipliziert.', 'ok'); render();
+  }
+  else if(act === 'check') doCheck();
+  else if(act === 'mixtip'){ const N = resN(), D = resD(); fb(`Rechne ${N} : ${D}. Das Ergebnis ohne Rest sind die Ganzen, der Rest kommt in den Zähler.`, 'info'); }
+  else if(act === 'mixcheck') doMix();
+  else if(act === 'direct') doDirect();
+  else if(act === 'solution'){ autoCancel(); S.helped = true; fb('', ''); finish(); }
+  else if(act === 'next' || act === 'skip') newTask();
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter' || !S || e.target.tagName !== 'INPUT') return;
+  const id = e.target.id;
+  const order = [...document.querySelectorAll('#stage input, #extra input')];
+  const i = order.indexOf(e.target);
+  if(id === 'divisor'){ doCut(); return; }
+  if(i > -1 && i < order.length-1 && order[i+1].value === ''){ order[i+1].focus(); return; }
+  const map = {conv:doConv, calc:doCheck, mix:doMix, direct:doDirect};
+  if(map[S.step]) map[S.step]();
+});
+
+/* ---------- Einstellungen ---------- */
+$('types').innerHTML = TYPES.map(t => `<button type="button" class="tchip" data-type="${t[0]}" aria-pressed="true">${t[1]}</button>`).join('');
+$('types').addEventListener('click', e => {
+  const b = e.target.closest('.tchip'); if(!b) return;
+  const k = b.dataset.type;
+  if(active.has(k)){ if(active.size===1){ fb('Mindestens eine Aufgabenart muss ausgewählt bleiben.', 'info'); return; } active.delete(k); }
+  else active.add(k);
+  b.setAttribute('aria-pressed', active.has(k));
+  updatePool(); newTask();
+});
+document.querySelectorAll('[data-level]').forEach(b => b.addEventListener('click', () => {
+  level = b.dataset.level;
+  document.querySelectorAll('[data-level]').forEach(x => x.setAttribute('aria-pressed', x===b));
+  updatePool(); newTask();
+}));
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
+  mode = b.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x===b));
+  newTask();
+}));
+function updatePool(){
+  const n = [...active].reduce((s,k) => s + POOL[level][k], 0);
+  $('pool').textContent = `${n.toLocaleString('de-DE')} verschiedene Aufgaben in dieser Auswahl. Schon gestellte Aufgaben werden übersprungen.`;
+}
+
+updatePool();
+newTask();
+})();
+</script>
+
+</body></html>
